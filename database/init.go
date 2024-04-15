@@ -8,17 +8,20 @@ import (
 
 var db *sql.DB
 
-func CreateDatabase() {
+func OpenDatabase() {
 	dbLocal, err := sql.Open("sqlite3", "./forum.db")
 	if err != nil {
 		log.Fatal(err)
 	}
-	db = dbLocal
-	defer db.Close()
+	db = dbLocal	
 	createTables()
 	if err != nil {
 		fmt.Println(err)
 	}
+}
+
+func CloseDatabase(){
+	db.Close()
 }
 
 func createTables() {

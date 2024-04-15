@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	database "green-chat-forum-api/database"
+	"net/http"
 )
 
 func main() {
 
-	database.CreateDatabase()
+	database.OpenDatabase()
+	defer database.CloseDatabase()
 
 	http.Handle("/", http.FileServer(http.Dir("../")))
 	http.HandleFunc("/home", homeHandler)

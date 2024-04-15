@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"strings"
 
+	crypto "green-chat-forum-api/crypto"
 	db "green-chat-forum-api/database"
 	types "green-chat-forum-api/types"
 	util "green-chat-forum-api/util"
-	crypto "green-chat-forum-api/crypto"
 )
 
 func websocketHandler(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +37,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		keys, ok := r.URL.Query()["session_id"]
 		if !ok || len(keys[0]) < 1 {
 			resp.Error = &types.Error{Type: util.MISSING_PARAM, Message: "Error: missing request parameter: session_id"}
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 		session_id := keys[0]
@@ -45,7 +45,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		user, err := db.GetUserBySessionId(session_id)
 		if err != nil {
 			resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 
@@ -53,7 +53,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 			posts, err := db.GetPosts(user)
 			if err != nil {
 				resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
-				json.NewEncoder(w).Encode(resp)
+				sendResponse(w, resp)
 				return
 			}
 
@@ -66,7 +66,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		resp.Error = &types.Error{Type: util.WRONG_METHOD, Message: "Error: wrong http method"}
 	}
 
-	json.NewEncoder(w).Encode(resp)
+	sendResponse(w, resp)
 }
 
 func signinHandler(w http.ResponseWriter, r *http.Request) {
@@ -89,14 +89,14 @@ func signinHandler(w http.ResponseWriter, r *http.Request) {
 			err := db.UpdateSessionId(user)
 			if err != nil {
 				resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: unable access database: %v", err)}
-				json.NewEncoder(w).Encode(resp)
+				sendResponse(w, resp)
 				return
 			}
 
 			posts, err := db.GetPosts(user)
 			if err != nil {
 				resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: unable access database: %v", err)}
-				json.NewEncoder(w).Encode(resp)
+				sendResponse(w, resp)
 				return
 			}
 
@@ -105,8 +105,7 @@ func signinHandler(w http.ResponseWriter, r *http.Request) {
 			resp.Payload = data
 		}
 	}
-
-	json.NewEncoder(w).Encode(resp)
+	sendResponse(w, resp)
 }
 
 func signupHandler(w http.ResponseWriter, r *http.Request) {
@@ -154,7 +153,7 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: unable access database: %v", err)}
 			resp.Payload = nil
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 		data.Posts = posts
@@ -162,7 +161,7 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 		resp.Payload = data
 	}
 	fmt.Println(resp)
-	json.NewEncoder(w).Encode(resp)
+	sendResponse(w, resp)
 }
 
 func signoutHandler(w http.ResponseWriter, r *http.Request) {
@@ -174,7 +173,7 @@ func signoutHandler(w http.ResponseWriter, r *http.Request) {
 	u, err := db.GetUserBySessionId(session_id)
 	if err != nil {
 		resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
-		json.NewEncoder(w).Encode(resp)
+		sendResponse(w, resp)
 		return
 	}
 
@@ -182,13 +181,13 @@ func signoutHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
-		json.NewEncoder(w).Encode(resp)
+		sendResponse(w, resp)
 		return
 	}
 
 	removeClient(u.Id)
 	broadcastClientsStatus()
-	json.NewEncoder(w).Encode(resp)
+	sendResponse(w, resp)
 }
 
 func newpostHandler(w http.ResponseWriter, r *http.Request) {
@@ -199,7 +198,7 @@ func newpostHandler(w http.ResponseWriter, r *http.Request) {
 		keys, ok := r.URL.Query()["session_id"]
 		if !ok || len(keys[0]) < 1 {
 			resp.Error = &types.Error{Type: util.MISSING_PARAM, Message: "Error: missing request parameter: session_id"}
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 		session_id := keys[0]
@@ -208,12 +207,12 @@ func newpostHandler(w http.ResponseWriter, r *http.Request) {
 		user, err := db.GetUserBySessionId(session_id)
 		if user == nil {
 			resp.Error = &types.Error{Type: util.NO_USER_FOUND, Message: fmt.Sprintf("Error: unable to authorize user: %v", err)}
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 		if err != nil {
 			resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 
@@ -224,7 +223,7 @@ func newpostHandler(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 
@@ -232,7 +231,7 @@ func newpostHandler(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			resp.Error = &types.Error{Type: util.ERROR_PARSING_DATA, Message: fmt.Sprintf("Error: unable to parse data %v", err)}
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 
@@ -250,13 +249,13 @@ func newpostHandler(w http.ResponseWriter, r *http.Request) {
 		//0. Validate content
 		if len(content) == 0 {
 			resp.Error = &types.Error{Type: util.INVALID_INPUT, Message: "Empty post is not allowed"}
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 
 		if len(content) > 10000 {
 			resp.Error = &types.Error{Type: util.INVALID_INPUT, Message: "Post is too large"}
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 
@@ -264,12 +263,12 @@ func newpostHandler(w http.ResponseWriter, r *http.Request) {
 		user, err := db.GetUserBySessionId(session_id)
 		if user == nil {
 			resp.Error = &types.Error{Type: util.NO_USER_FOUND, Message: fmt.Sprintf("Error: unable to authorize user: %v", err)}
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 		if err != nil {
 			resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 
@@ -292,14 +291,14 @@ func newpostHandler(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 	} else {
 		resp.Error = &types.Error{Type: util.WRONG_METHOD, Message: "Error: wrong http method"}
 	}
 
-	json.NewEncoder(w).Encode(resp)
+	sendResponse(w, resp)
 }
 
 func messageHandler(w http.ResponseWriter, r *http.Request) {
@@ -308,7 +307,7 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != "POST" {
 		resp.Error = &types.Error{Type: util.WRONG_METHOD, Message: fmt.Sprintf("Error: %v", "Wrong method used")}
-		json.NewEncoder(w).Encode(resp)
+		sendResponse(w, resp)
 		return
 	}
 
@@ -319,31 +318,31 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 	//Verify input
 	if len(message) == 0 {
 		resp.Error = &types.Error{Type: util.INVALID_INPUT, Message: "Empty message is not allowed"}
-		json.NewEncoder(w).Encode(resp)
+		sendResponse(w, resp)
 		return
 	}
 
 	if len(message) > 1000 {
 		resp.Error = &types.Error{Type: util.INVALID_INPUT, Message: "Message is too large"}
-		json.NewEncoder(w).Encode(resp)
+		sendResponse(w, resp)
 		return
 	}
 
 	user, err := db.GetUserBySessionId(session_id)
 	if err != nil {
 		resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
-		json.NewEncoder(w).Encode(resp)
+		sendResponse(w, resp)
 		return
 	}
 	if user == nil {
-		json.NewEncoder(w).Encode(resp)
+		sendResponse(w, resp)
 		return
 	}
 
 	to_id_int, err := strconv.Atoi(to_id)
 	if err != nil {
 		resp.Error = &types.Error{Type: util.ERROR_PARSING_DATA, Message: fmt.Sprintf("Error: %v", err)}
-		json.NewEncoder(w).Encode(resp)
+		sendResponse(w, resp)
 		return
 	}
 
@@ -362,7 +361,7 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 	err = db.InsertMessage(m)
 	if err != nil {
 		resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
-		json.NewEncoder(w).Encode(resp)
+		sendResponse(w, resp)
 		return
 	}
 
@@ -372,7 +371,7 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		resp.Error = &types.Error{Type: util.ERROR_PARSING_DATA, Message: fmt.Sprintf("Error: %v", err)}
-		json.NewEncoder(w).Encode(resp)
+		sendResponse(w, resp)
 		return
 	}
 
@@ -380,7 +379,7 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 	notifyClient(m.FromId, b)
 	notifyClient(m.ToId, b)
 
-	json.NewEncoder(w).Encode(resp)
+	sendResponse(w, resp)
 }
 
 func commentsHandler(w http.ResponseWriter, r *http.Request) {
@@ -393,7 +392,7 @@ func commentsHandler(w http.ResponseWriter, r *http.Request) {
 		keys, ok := r.URL.Query()["session_id"]
 		if !ok || len(keys[0]) < 1 {
 			resp.Error = &types.Error{Type: util.MISSING_PARAM, Message: "Error: missing request parameter: session_id"}
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 		session_id := keys[0]
@@ -401,7 +400,7 @@ func commentsHandler(w http.ResponseWriter, r *http.Request) {
 		keys, ok = r.URL.Query()["post_id"]
 		if !ok || len(keys[0]) < 1 {
 			resp.Error = &types.Error{Type: util.MISSING_PARAM, Message: "Error: missing request parameter: post_id"}
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 		post_id := keys[0]
@@ -410,12 +409,12 @@ func commentsHandler(w http.ResponseWriter, r *http.Request) {
 		user, err := db.GetUserBySessionId(session_id)
 		if user == nil {
 			resp.Error = &types.Error{Type: util.NO_USER_FOUND, Message: fmt.Sprintf("Error: unable to authorize user: %v", err)}
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 		if err != nil {
 			resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 
@@ -425,13 +424,13 @@ func commentsHandler(w http.ResponseWriter, r *http.Request) {
 		postId, err := strconv.Atoi(post_id)
 		if err != nil {
 			resp.Error = &types.Error{Type: util.ERROR_PARSING_DATA, Message: fmt.Sprintf("Error: %v", err)}
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 		post, err := db.GetPost(postId)
 		if err != nil {
 			resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 
@@ -439,7 +438,7 @@ func commentsHandler(w http.ResponseWriter, r *http.Request) {
 		comments, err := db.GetComments(postId)
 		if err != nil {
 			resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 
@@ -457,25 +456,25 @@ func commentsHandler(w http.ResponseWriter, r *http.Request) {
 		//Verify comment
 		if len(comment) == 0 {
 			resp.Error = &types.Error{Type: util.INVALID_INPUT, Message: "Empty comment is not allowed"}
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 
 		if len(comment) > 10000 {
 			resp.Error = &types.Error{Type: util.INVALID_INPUT, Message: "Comment is too large"}
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 
 		user, err := db.GetUserBySessionId(session_id)
 		if err != nil {
 			resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 		if user == nil {
 			resp.Error = &types.Error{Type: util.NO_USER_FOUND, Message: fmt.Sprintf("Error: unable to authorize user: %v", err)}
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 
@@ -483,7 +482,7 @@ func commentsHandler(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			resp.Error = &types.Error{Type: util.ERROR_PARSING_DATA, Message: fmt.Sprintf("Error: unable to parse data %v", err)}
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 
@@ -491,14 +490,14 @@ func commentsHandler(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
-			json.NewEncoder(w).Encode(resp)
+			sendResponse(w, resp)
 			return
 		}
 
 	} else {
 		resp.Error = &types.Error{Type: util.WRONG_METHOD, Message: "Error: wrong http method"}
 	}
-	json.NewEncoder(w).Encode(resp)
+	sendResponse(w, resp)
 }
 
 func messagesHandler(w http.ResponseWriter, r *http.Request) {
@@ -557,8 +556,9 @@ func errorHandler(err error) {
 	fmt.Println("Error: ", err)
 }
 
-func Cors(w http.ResponseWriter, r *http.Request) {
+func sendResponse(w http.ResponseWriter, resp types.Response) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8000")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	json.NewEncoder(w).Encode(resp)
 }
