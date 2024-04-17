@@ -2,8 +2,8 @@ package database
 
 import (
 	"database/sql"
-	"log"
 	"fmt"
+	"log"
 )
 
 var db *sql.DB
@@ -13,14 +13,14 @@ func OpenDatabase() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	db = dbLocal	
+	db = dbLocal
 	createTables()
 	if err != nil {
 		fmt.Println(err)
 	}
 }
 
-func CloseDatabase(){
+func CloseDatabase() {
 	db.Close()
 }
 
@@ -48,4 +48,10 @@ func createTables() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	err = crerateAdminsTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+	SaveAdmin()
 }
