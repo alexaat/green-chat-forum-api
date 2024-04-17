@@ -51,6 +51,27 @@ func GetUsers() ([]*types.User, error) {
 	return users, nil
 }
 
+func GetUserById(id int)  (*types.User, error) {
+	rows, err := db.Query("SELECT id, nick_name FROM users WHERE id = ? LIMIT 1", id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	user := types.User{}
+	for rows.Next() {		
+		err = rows.Scan(&(user.Id), &(user.NickName))
+		if err != nil {
+			return nil, err
+		}		
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
 func SaveUser(user *types.User) (int64, error) {
 	statement, err := db.Prepare("INSERT INTO users (first_name, last_name, age, gender, nick_name, email, password, session_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {

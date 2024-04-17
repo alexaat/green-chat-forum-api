@@ -13,15 +13,6 @@ import (
 func adminUsersHandler(w http.ResponseWriter, r *http.Request) {
 	resp := types.Response{Payload: nil, Error: nil}
 
-	//Get user id from url
-	userIdStr := strings.TrimSpace(strings.TrimPrefix(r.URL.Path, "/admin/users/"))
-	userId, err := strconv.Atoi(userIdStr)
-
-	if err != nil || userId < 1 {
-		resp.Error = &types.Error{Type: util.ERROR_PARSING_DATA, Message: fmt.Sprintf("Cannot parse user id: %v. %v", userIdStr, err)}
-		sendResponse(w, resp)
-	}
-
 	//Verify admin
 	keys, ok := r.URL.Query()["session_id"]
 	if !ok || len(keys[0]) < 1 {
@@ -35,6 +26,41 @@ func adminUsersHandler(w http.ResponseWriter, r *http.Request) {
 		resp.Error = &types.Error{Type: util.AUTHORIZATION, Message: "Error: cannot verify admin"}
 		sendResponse(w, resp)
 		return
+	}
+
+	//Get user id from url
+	userId := 0
+	if strings.Contains(r.URL.Path, "/admin/users/") {
+		userIdStr := strings.TrimSpace(strings.TrimPrefix(r.URL.Path, "/admin/users/"))
+
+		if userIdStr != "" {
+			userId, err = strconv.Atoi(userIdStr)
+			if err != nil || userId < 1 {
+				resp.Error = &types.Error{Type: util.ERROR_PARSING_DATA, Message: fmt.Sprintf("Cannot parse user id: %v. %v", userIdStr, err)}
+				sendResponse(w, resp)
+			}
+		}
+	}
+
+	if r.Method == "GET" {
+		if userId == 0 {
+			//No user id. Get All users
+			users, err := db.GetUsers()
+			if err != nil {
+				resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
+				sendResponse(w, resp)
+				return
+			}
+			resp.Payload = users
+		} else {
+			user, err := db.GetUserById(userId)
+			if err != nil {
+				resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
+				sendResponse(w, resp)
+				return
+			}
+			resp.Payload = user
+		}
 	}
 
 	if r.Method == "DELETE" {
