@@ -20,3 +20,5 @@ const WRONG_METHOD = "error_wrong_method"
 
 const MISSING_PARAM = "missing request parameter"
 const INVALID_INPUT = "invalid input"
+
+const AUTHORIZATION = "authorization"
