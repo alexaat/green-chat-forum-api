@@ -51,3 +51,31 @@ func adminUsersHandler(w http.ResponseWriter, r *http.Request) {
 
 	sendResponse(w, resp)
 }
+
+func adminSignUpHandler(w http.ResponseWriter, r *http.Request) {
+	resp := types.Response{Payload: nil, Error: nil}
+
+	email := strings.TrimSpace(r.FormValue("email"))
+	password := r.FormValue("password")
+
+	//Validate
+	admin, err := db.GetAdminByEmailAndPassword(email, password)
+
+	if err != nil || admin == nil {
+		resp.Error = &types.Error{Type: util.AUTHORIZATION, Message: fmt.Sprintf("Cannot get admin from database. %v", err)}
+		sendResponse(w, resp)
+		return
+	}
+
+	(*admin).SessionId = generateSessionId()
+
+	err = db.UpdateAdminSessionId(admin)
+	if err != nil {
+		resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Cannot update database. %v", err)}
+		sendResponse(w, resp)
+		return
+	}
+
+	resp.Payload = admin
+	sendResponse(w, resp)
+}

@@ -1,6 +1,7 @@
 package database
 
 import (
+	ctypto "green-chat-forum-api/crypto"
 	types "green-chat-forum-api/types"
 	"strings"
 )
@@ -66,4 +67,40 @@ func GetAdminBySessionId(sessionId string) (*types.User, error) {
 		return nil, err
 	}
 	return user, nil
+}
+
+func GetAdminByEmailAndPassword(email string, password string) (*types.User, error) {
+	rows, err := db.Query("SELECT id, email, password FROM admins WHERE email = ? LIMIT 1", email)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	u := types.User{}
+	for rows.Next() {
+		err = rows.Scan(&(u.Id), &(u.Email), &(u.Password))
+		if err != nil {
+			return nil, err
+		}
+		if ctypto.CompairPasswords(u.Password, password) {
+			u.Password = ""
+			return &u, nil
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+func UpdateAdminSessionId(user *types.User) error {
+	statement, err := db.Prepare("UPDATE admins SET session_id = ? WHERE id = ?")
+	if err != nil {
+		return err
+	}
+	defer statement.Close()
+	_, err = statement.Exec(user.SessionId, user.Id)
+	if err != nil {
+		return err
+	}
+	return nil
 }
