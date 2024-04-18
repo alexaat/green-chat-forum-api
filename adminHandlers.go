@@ -64,15 +64,45 @@ func adminUsersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == "DELETE" {
-		fmt.Println("Delete user")
+		if userId > 0 {
 
-		//Delete user
+			//Delete user
+			num1, err := db.DeleteUserById(userId)
+			if err != nil {
+				resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Cannot update database. %v", err)}
+				sendResponse(w, resp)
+				return
+			}
 
-		//Delete posts
+			//Delete posts
+			num2, err := db.DeletePostsByUserId(userId)
+			if err != nil {
+				resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Cannot update database. %v", err)}
+				sendResponse(w, resp)
+				return
+			}
 
-		//Delete comments
+			//Delete comments
+			num3, err := db.DeleteCommentsByUserId(userId)
+			if err != nil {
+				resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Cannot update database. %v", err)}
+				sendResponse(w, resp)
+				return
+			}
 
-		//Delete chat messages
+			//Delete chat messages
+			num4, err := db.DeleteMessagesByUserId(userId)
+			if err != nil {
+				resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Cannot update database. %v", err)}
+				sendResponse(w, resp)
+				return
+			}
+
+			resp.Payload = types.RowsAffected{
+				RowsAffected: *num1 + *num2 + *num3 + *num4,
+			}
+		}
+
 	}
 
 	sendResponse(w, resp)

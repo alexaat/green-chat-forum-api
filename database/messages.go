@@ -130,3 +130,21 @@ func GetChatMates(id int) ([]*types.User, error) {
 	}
 	return users, nil
 }
+
+func DeleteMessagesByUserId(id int) (*int64, error) {
+	statement, err := db.Prepare("DELETE FROM messages WHERE from_id = ? OR to_id = ?")
+	if err != nil {
+		return nil, err
+	}
+	defer statement.Close()
+	result, err := statement.Exec(id, id)
+	if err != nil {
+		return nil, err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return nil, err
+	}
+
+	return &rowsAffected, nil
+}

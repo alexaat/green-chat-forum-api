@@ -1,8 +1,8 @@
 package database
 
 import (
-	util "green-chat-forum-api/util"
 	types "green-chat-forum-api/types"
+	util "green-chat-forum-api/util"
 )
 
 //       ________comments_____________________________________________
@@ -83,4 +83,22 @@ func GetNumberOfComments(postId int) (int, error) {
 		return -1, err
 	}
 	return counter, nil
+}
+
+func DeleteCommentsByUserId(id int) (*int64, error) {
+	statement, err := db.Prepare("DELETE FROM comments WHERE user_id = ?")
+	if err != nil {
+		return nil, err
+	}
+	defer statement.Close()
+	result, err := statement.Exec(id)
+	if err != nil {
+		return nil, err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return nil, err
+	}
+
+	return &rowsAffected, nil
 }

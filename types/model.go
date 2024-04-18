@@ -72,7 +72,7 @@ type Comment struct {
 	UserId       int    `json:"user_id"`
 	UserNickName string `json:"user_nick_name"`
 	PostId       int    `json:"post_id"`
-	Content      string `json:"content"`	
+	Content      string `json:"content"`
 }
 
 type CommentsPageObject struct {
@@ -90,4 +90,8 @@ type Client struct {
 	User           *User
 	Conn           *websocket.Conn
 	MessageChannel chan []byte
+}
+
+type RowsAffected struct {
+	RowsAffected int64 `json:"rows-affected"`
 }

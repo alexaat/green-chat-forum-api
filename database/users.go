@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	_ "github.com/mattn/go-sqlite3"
-	types "green-chat-forum-api/types"
 	ctypto "green-chat-forum-api/crypto"
+	types "green-chat-forum-api/types"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 //     _________users_______________________________________________________________________________________________
@@ -51,7 +52,7 @@ func GetUsers() ([]*types.User, error) {
 	return users, nil
 }
 
-func GetUserById(id int)  (*types.User, error) {
+func GetUserById(id int) (*types.User, error) {
 	rows, err := db.Query("SELECT id, nick_name FROM users WHERE id = ? LIMIT 1", id)
 	if err != nil {
 		return nil, err
@@ -59,11 +60,11 @@ func GetUserById(id int)  (*types.User, error) {
 	defer rows.Close()
 
 	user := types.User{}
-	for rows.Next() {		
+	for rows.Next() {
 		err = rows.Scan(&(user.Id), &(user.NickName))
 		if err != nil {
 			return nil, err
-		}		
+		}
 	}
 	err = rows.Err()
 	if err != nil {
@@ -204,4 +205,22 @@ func GetUserBySessionId(session_id string) (*types.User, error) {
 		return nil, err
 	}
 	return user, nil
+}
+
+func DeleteUserById(id int) (*int64, error) {
+	statement, err := db.Prepare("DELETE FROM users WHERE id = ?")
+	if err != nil {
+		return nil, err
+	}
+	defer statement.Close()
+	result, err := statement.Exec(id)
+	if err != nil {
+		return nil, err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return nil, err
+	}
+
+	return &rowsAffected, nil
 }
