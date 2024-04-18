@@ -135,3 +135,73 @@ func adminSignUpHandler(w http.ResponseWriter, r *http.Request) {
 	resp.Payload = admin
 	sendResponse(w, resp)
 }
+
+func adminPostsHandler(w http.ResponseWriter, r *http.Request) {
+	resp := types.Response{Payload: nil, Error: nil}
+
+	//Verify admin
+	keys, ok := r.URL.Query()["session_id"]
+	if !ok || len(keys[0]) < 1 {
+		resp.Error = &types.Error{Type: util.MISSING_PARAM, Message: "Error: missing request parameter: session_id"}
+		sendResponse(w, resp)
+		return
+	}
+	session_id := keys[0]
+	user, err := db.GetAdminBySessionId(session_id)
+	if err != nil || user == nil {
+		resp.Error = &types.Error{Type: util.AUTHORIZATION, Message: "Error: cannot verify admin"}
+		sendResponse(w, resp)
+		return
+	}
+
+	//Get post id from url
+	postId := 0
+	if strings.Contains(r.URL.Path, "/admin/posts/") {
+		postIdStr := strings.TrimSpace(strings.TrimPrefix(r.URL.Path, "/admin/posts/"))
+		if postIdStr != "" {
+			postId, err = strconv.Atoi(postIdStr)
+			if err != nil || postId < 1 {
+				resp.Error = &types.Error{Type: util.ERROR_PARSING_DATA, Message: fmt.Sprintf("Cannot parse user id: %v. %v", postIdStr, err)}
+				sendResponse(w, resp)
+			}
+		}
+	}
+
+	if r.Method == "GET" {
+		if postId == 0 {
+			//No post id. Get All posts
+			posts, err := db.GetAllPosts()
+			if err != nil {
+				resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
+				sendResponse(w, resp)
+				return
+			}
+			resp.Payload = posts
+		} else {
+			post, err := db.GetPost(postId)
+			if err != nil {
+				resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
+				sendResponse(w, resp)
+				return
+			}
+			resp.Payload = post
+		}
+	}
+
+	if r.Method == "DELETE" {
+		if postId > 0 {
+			num, err := db.DeletePost(postId)
+			if err != nil {
+				resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
+				sendResponse(w, resp)
+				return
+			}
+			resp.Payload = types.RowsAffected{
+				RowsAffected: *num,
+			}
+		}
+
+	}
+
+	sendResponse(w, resp)
+}
