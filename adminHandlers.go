@@ -205,3 +205,74 @@ func adminPostsHandler(w http.ResponseWriter, r *http.Request) {
 
 	sendResponse(w, resp)
 }
+
+func adminCommentsHandler(w http.ResponseWriter, r *http.Request) {
+	resp := types.Response{Payload: nil, Error: nil}
+
+	//Verify admin
+	keys, ok := r.URL.Query()["session_id"]
+	if !ok || len(keys[0]) < 1 {
+		resp.Error = &types.Error{Type: util.MISSING_PARAM, Message: "Error: missing request parameter: session_id"}
+		sendResponse(w, resp)
+		return
+	}
+	session_id := keys[0]
+	user, err := db.GetAdminBySessionId(session_id)
+	if err != nil || user == nil {
+		resp.Error = &types.Error{Type: util.AUTHORIZATION, Message: "Error: cannot verify admin"}
+		sendResponse(w, resp)
+		return
+	}
+
+	//Get comment id from url
+	commentId := 0
+	if strings.Contains(r.URL.Path, "/admin/comments/") {
+		commentsIdStr := strings.TrimSpace(strings.TrimPrefix(r.URL.Path, "/admin/comments/"))
+		if commentsIdStr != "" {
+			commentId, err = strconv.Atoi(commentsIdStr)
+			if err != nil || commentId < 1 {
+				resp.Error = &types.Error{Type: util.ERROR_PARSING_DATA, Message: fmt.Sprintf("Cannot parse user id: %v. %v", commentsIdStr, err)}
+				sendResponse(w, resp)
+			}
+		}
+	}
+
+	if r.Method == "GET" {
+		if commentId == 0 {
+			//Get All Comments
+			comments, err := db.GetAllComments()
+			if err != nil {
+				resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
+				sendResponse(w, resp)
+				return
+			}
+			resp.Payload = comments
+		} else {
+			comments, err := db.GetCommentById(commentId)
+			if err != nil {
+				resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
+				sendResponse(w, resp)
+				return
+			}
+			resp.Payload = comments
+
+		}
+	}
+
+	if r.Method == "DELETE" {
+		if commentId > 0 {
+			num, err := db.DeleteCommentById(commentId)
+			if err != nil {
+				resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
+				sendResponse(w, resp)
+				return
+			}
+			resp.Payload = types.RowsAffected{
+				RowsAffected: *num,
+			}
+		}
+	}
+
+	sendResponse(w, resp)
+
+}

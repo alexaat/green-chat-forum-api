@@ -26,6 +26,8 @@ func main() {
 	http.HandleFunc("/admin/users/", adminUsersHandler)
 	http.HandleFunc("/admin/posts", adminPostsHandler)
 	http.HandleFunc("/admin/posts/", adminPostsHandler)
+	http.HandleFunc("/admin/comments", adminCommentsHandler)
+	http.HandleFunc("/admin/comments/", adminCommentsHandler)
 	fmt.Println("Server running at port 8080")
 	http.ListenAndServe(":8080", nil)
 }

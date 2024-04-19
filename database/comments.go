@@ -102,3 +102,77 @@ func DeleteCommentsByUserId(id int) (*int64, error) {
 
 	return &rowsAffected, nil
 }
+
+func DeleteCommentById(id int) (*int64, error) {
+	statement, err := db.Prepare("DELETE FROM comments WHERE id = ?")
+	if err != nil {
+		return nil, err
+	}
+	defer statement.Close()
+	result, err := statement.Exec(id)
+	if err != nil {
+		return nil, err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return nil, err
+	}
+	return &rowsAffected, nil
+}
+
+func GetAllComments() (*[]types.Comment, error) {
+	comments := []types.Comment{}
+	sql := `
+	SELECT comments.id, comments.date, comments.user_id, users.nick_name, comments.post_id, comments.content 
+	FROM comments
+	INNER JOIN users
+	ON comments.user_id = users.id	
+	ORDER BY comments.date DESC	
+	`
+	rows, err := db.Query(sql)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		comment := types.Comment{}
+		err = rows.Scan(&(comment.Id), &(comment.Date), &(comment.UserId), &(comment.UserNickName), &(comment.PostId), &(comment.Content))
+		if err != nil {
+			return nil, err
+		}
+		comments = append(comments, comment)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	return &comments, nil
+}
+
+func GetCommentById(id int) (*types.Comment, error) {
+	comment := types.Comment{}
+	sql := `
+	SELECT comments.id, comments.date, comments.user_id, users.nick_name, comments.post_id, comments.content 
+	FROM comments
+	INNER JOIN users
+	ON comments.user_id = users.id	
+	WHERE comments.id = ?
+	LIMIT 1	
+	`
+	rows, err := db.Query(sql, id)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		err = rows.Scan(&(comment.Id), &(comment.Date), &(comment.UserId), &(comment.UserNickName), &(comment.PostId), &(comment.Content))
+		if err != nil {
+			return nil, err
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	return &comment, nil
+}

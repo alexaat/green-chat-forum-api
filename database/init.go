@@ -42,7 +42,7 @@ func createTables() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	_ = InsertCategories([]string{"gereen apple", "cucumber", "kivi", "green grapes", "avocado", "broccoli", "spinach"})
+	_ = InsertCategories([]string{"green apple", "cucumber", "kivi", "green grapes", "avocado", "broccoli", "spinach"})
 
 	err = crerateCommentsTable()
 	if err != nil {
