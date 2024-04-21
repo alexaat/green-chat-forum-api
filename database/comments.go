@@ -176,3 +176,19 @@ func GetCommentById(id int) (*types.Comment, error) {
 	}
 	return &comment, nil
 }
+func DeleteCommentByPostId(id int) (*int64, error) {
+	statement, err := db.Prepare("DELETE FROM comments WHERE post_id = ?")
+	if err != nil {
+		return nil, err
+	}
+	defer statement.Close()
+	result, err := statement.Exec(id)
+	if err != nil {
+		return nil, err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return nil, err
+	}
+	return &rowsAffected, nil
+}

@@ -91,6 +91,52 @@ func GetPosts(user *types.User) (*[]types.Post, error) {
 	return &posts, nil
 }
 
+func GetPostsByUserId(userId int) (*[]types.Post, error) {
+	posts := []types.Post{}
+
+	sql := `
+	SELECT posts.id, date, user_id, users.nick_name, content, categories
+	FROM posts
+	INNER JOIN users
+	ON user_id = users.id
+	WHERE user_id = ?
+	ORDER BY date DESC`
+	rows, err := db.Query(sql, userId)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		post := types.Post{}
+		var categories string
+		err = rows.Scan(&(post.Id), &(post.Date), &(post.UserId), &(post.NickName), &(post.Content), &categories)
+		if err != nil {
+			return nil, err
+		}
+		var arr []string
+		err = json.Unmarshal([]byte(categories), &arr)
+
+		if err == nil {
+			post.Categories = arr
+		} else {
+			post.Categories = []string{}
+		}
+		numberOfComments, err := GetNumberOfComments(post.Id)
+		if err != nil {
+			return nil, err
+		}
+		if numberOfComments == -1 {
+			numberOfComments = 0
+		}
+		post.NumberOfComments = numberOfComments
+		posts = append(posts, post)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	return &posts, nil
+}
+
 func GetPost(postId int) (*types.Post, error) {
 	post := types.Post{}
 
