@@ -66,13 +66,13 @@ func adminUsersHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "DELETE" {
 		if userId > 0 {
 
-			//Get Posts		
+			//Get Posts
 			posts, err := db.GetPostsByUserId(userId)
 			if err != nil {
 				resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Cannot read database. %v", err)}
 				sendResponse(w, resp)
 				return
-			}			
+			}
 
 			//Delete user
 			num1, err := db.DeleteUserById(userId)
@@ -100,7 +100,7 @@ func adminUsersHandler(w http.ResponseWriter, r *http.Request) {
 
 			var num5 int64 = 0
 
-			for _, post := range *posts {			
+			for _, post := range *posts {
 				n, err := db.DeleteCommentByPostId(post.Id)
 				if err != nil {
 					resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Cannot update database. %v", err)}
@@ -123,6 +123,14 @@ func adminUsersHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
+	}
+
+	if r.Method == "PATCH" {
+		if userId > 0 {
+			fmt.Println("Ban user with id ", userId)
+
+		}
+		resp.Payload = types.RowsAffected{RowsAffected: -1}
 	}
 
 	sendResponse(w, resp)
