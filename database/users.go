@@ -15,7 +15,7 @@ import (
 //     |  INTEGER |  TEXT        |  TEXT       |  int  |  TEXT    |  TEXT       |  TEXT    |  TEXT     | TEXT       |
 
 func crerateUsersTable() error {
-	sql := "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, first_name TEXT, last_name TEXT, age INTEGER, gender TEXT NOT NULL, nick_name TEXT NOT NULL UNIQUE, email TEXT NOT NULL UNIQUE, password TEXT NOT NULL, session_id TEXT)"
+	sql := "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, first_name TEXT, last_name TEXT, age INTEGER, gender TEXT NOT NULL, nick_name TEXT NOT NULL UNIQUE, email TEXT NOT NULL UNIQUE, password TEXT NOT NULL, session_id TEXT, status TEXT)"
 
 	statement, err := db.Prepare(sql)
 	if err != nil {
@@ -30,7 +30,7 @@ func crerateUsersTable() error {
 }
 
 func GetUsers() ([]*types.User, error) {
-	rows, err := db.Query("SELECT id, nick_name FROM users ORDER BY nick_name COLLATE NOCASE ASC")
+	rows, err := db.Query("SELECT id, nick_name, status FROM users ORDER BY nick_name COLLATE NOCASE ASC")
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func GetUsers() ([]*types.User, error) {
 	users := []*types.User{}
 	for rows.Next() {
 		user := types.User{}
-		err = rows.Scan(&(user.Id), &(user.NickName))
+		err = rows.Scan(&(user.Id), &(user.NickName), &(user.Status))
 		if err != nil {
 			return nil, err
 		}
@@ -98,7 +98,17 @@ func printUsers() error {
 	defer rows.Close()
 	for rows.Next() {
 		user := types.User{}
-		err = rows.Scan(&(user.Id), &(user.FirstName), &(user.LastName), &(user.Age), &(user.Gender), &(user.NickName), &(user.Email), &(user.Password), &(user.SessionId))
+		err = rows.Scan(
+			&(user.Id),
+			&(user.FirstName),
+			&(user.LastName),
+			&(user.Age),
+			&(user.Gender),
+			&(user.NickName),
+			&(user.Email),
+			&(user.Password),
+			&(user.SessionId),
+			&(user.Status))
 		if err != nil {
 			return err
 		}
@@ -121,7 +131,17 @@ func GetUserByEmailOrNickNameAndPassword(user types.User) (*types.User, error) {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		err = rows.Scan(&(u.Id), &(u.FirstName), &(u.LastName), &(u.Age), &(u.Gender), &(u.NickName), &(u.Email), &(u.Password), &(u.SessionId))
+		err = rows.Scan(
+			&(u.Id),
+			&(u.FirstName),
+			&(u.LastName),
+			&(u.Age),
+			&(u.Gender),
+			&(u.NickName),
+			&(u.Email),
+			&(u.Password),
+			&(u.SessionId),
+			&(u.Status))
 		if err != nil {
 			return nil, err
 		}
@@ -195,7 +215,18 @@ func GetUserBySessionId(session_id string) (*types.User, error) {
 	var user *types.User = nil
 	for rows.Next() {
 		user = &types.User{}
-		err = rows.Scan(&(user.Id), &(user.FirstName), &(user.LastName), &(user.Age), &(user.Gender), &(user.NickName), &(user.Email), &(user.Password), &(user.SessionId))
+		err = rows.Scan(
+			&(user.Id),
+			&(user.FirstName),
+			&(user.LastName),
+			&(user.Age),
+			&(user.Gender),
+			&(user.NickName),
+			&(user.Email),
+			&(user.Password),
+			&(user.SessionId),
+			&(user.Status),
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -223,4 +254,21 @@ func DeleteUserById(id int) (*int64, error) {
 	}
 
 	return &rowsAffected, nil
+}
+
+func UpdateUserStatus(userId int, status string) (*int64, error) {
+	statement, err := db.Prepare("UPDATE users SET status = ? WHERE id = ?")
+	if err != nil {
+		return nil, err
+	}
+	defer statement.Close()
+	result, err := statement.Exec(status, userId)
+	if err != nil {
+		return nil, err
+	}
+	num, err := result.RowsAffected()
+	if err != nil {
+		return nil, err
+	}
+	return &num, nil
 }

@@ -49,6 +49,12 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		if user.Status != nil && user.Status.(string) == "banned" {
+			resp.Payload = nil
+			sendResponse(w, resp)
+			return
+		}
+
 		if user != nil {
 			posts, err := db.GetPosts(user)
 			if err != nil {

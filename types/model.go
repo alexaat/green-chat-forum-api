@@ -3,17 +3,18 @@ package types
 import "github.com/gorilla/websocket"
 
 type User struct {
-	Id        int    `json:"id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Age       int    `json:"age,string"`
-	Gender    string `json:"gender"`
-	NickName  string `json:"nick_name"`
-	Email     string `json:"email"`
-	Password  string `json:"password"`
-	Password2 string `json:"password2"`
-	SessionId string `json:"session_id"`
-	OnLine    bool   `json:"on_line"`
+	Id        int         `json:"id"`
+	FirstName string      `json:"first_name"`
+	LastName  string      `json:"last_name"`
+	Age       int         `json:"age,string"`
+	Gender    string      `json:"gender"`
+	NickName  string      `json:"nick_name"`
+	Email     string      `json:"email"`
+	Password  string      `json:"password"`
+	Password2 string      `json:"password2"`
+	SessionId string      `json:"session_id"`
+	OnLine    bool        `json:"on_line"`
+	Status    interface{} `json:"status"`
 }
 
 type Post struct {
