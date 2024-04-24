@@ -53,7 +53,7 @@ func GetUsers() ([]*types.User, error) {
 }
 
 func GetUserById(id int) (*types.User, error) {
-	rows, err := db.Query("SELECT id, nick_name FROM users WHERE id = ? LIMIT 1", id)
+	rows, err := db.Query("SELECT id, nick_name, status FROM users WHERE id = ? LIMIT 1", id)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func GetUserById(id int) (*types.User, error) {
 
 	user := types.User{}
 	for rows.Next() {
-		err = rows.Scan(&(user.Id), &(user.NickName))
+		err = rows.Scan(&(user.Id), &(user.NickName), &(user.Status))
 		if err != nil {
 			return nil, err
 		}

@@ -63,6 +63,13 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
+			posts, err = filterPostsByBannedUser(*posts)
+			if err != nil {
+				resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
+				sendResponse(w, resp)
+				return
+			}
+
 			util.RemoveUserInfo(user)
 			data := types.Data{Posts: posts, User: user}
 			resp.Payload = data
@@ -448,6 +455,14 @@ func commentsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		//Filter by banned user
+		comments, err = filterCommentsByUserId(comments)
+		if err != nil {
+			resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
+			sendResponse(w, resp)
+			return
+		}
+
 		cpo := types.CommentsPageObject{}
 		cpo.User = user
 		cpo.Post = post
@@ -568,3 +583,4 @@ func sendResponse(w http.ResponseWriter, resp types.Response) {
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	json.NewEncoder(w).Encode(resp)
 }
+

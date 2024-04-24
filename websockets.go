@@ -115,6 +115,8 @@ func broadcastClientsStatus() {
 			return
 		}
 
+		users = filterUsersByBanned(users)
+
 		//Join chatMates and users
 		for _, user := range users {
 			if !util.Contains(chatMates, *user) && user.Id != id {
