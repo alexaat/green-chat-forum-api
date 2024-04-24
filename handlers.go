@@ -20,10 +20,10 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-
 	if user == nil {
 		return
 	}
+
 	addClient(*user, w, r)
 	broadcastClientsStatus()
 }
@@ -49,7 +49,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if user.Status != nil && user.Status.(string) == "banned" {
+		if user != nil && user.Status != nil && user.Status.(string) == "banned" {
 			resp.Payload = nil
 			sendResponse(w, resp)
 			return
@@ -198,8 +198,10 @@ func signoutHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	removeClient(u.Id)
-	broadcastClientsStatus()
+	if u != nil {
+		removeClient(u.Id)
+		broadcastClientsStatus()
+	}
 	sendResponse(w, resp)
 }
 
@@ -523,9 +525,13 @@ func commentsHandler(w http.ResponseWriter, r *http.Request) {
 
 func messagesHandler(w http.ResponseWriter, r *http.Request) {
 	chat := types.Chat{UserId: -1, ChatMateId: -1, Messages: nil, Error: nil}
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8000")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, PATCH")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 	if r.Method != "POST" {
 		chat.Error = &types.Error{Type: util.WRONG_METHOD, Message: fmt.Sprintf("Error: %v", "Wrong method used")}
+
 		json.NewEncoder(w).Encode(chat)
 		return
 	}
@@ -583,4 +589,3 @@ func sendResponse(w http.ResponseWriter, resp types.Response) {
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	json.NewEncoder(w).Encode(resp)
 }
-

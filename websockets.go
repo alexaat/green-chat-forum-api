@@ -41,9 +41,10 @@ func addClient(user types.User, w http.ResponseWriter, r *http.Request) {
 	}
 	clients[user.Id] = &client
 
+	fmt.Println("clients ", clients)
+
 	go writeMessage(user.Id)
 	go readMessages(user.Id)
-
 }
 
 func removeClient(id int) {
@@ -106,16 +107,16 @@ func broadcastClientsStatus() {
 		chatMates, err := db.GetChatMates(id)
 
 		if err != nil {
+			fmt.Println(err)
 			return
 		}
 
 		users, err := db.GetUsers()
 
 		if err != nil {
+			fmt.Println(err)
 			return
 		}
-
-		users = filterUsersByBanned(users)
 
 		//Join chatMates and users
 		for _, user := range users {
@@ -128,6 +129,11 @@ func broadcastClientsStatus() {
 		for _, user := range chatMates {
 			//Mark on-line/off-line
 			util.SetOnLineStatus(user, clients)
+		}
+
+		chatMates = filterUsersByBanned(chatMates)
+		for _, mate := range chatMates {
+			fmt.Println("filtered ", mate)
 		}
 
 		message := `{"online_users":[`

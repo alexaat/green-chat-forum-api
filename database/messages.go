@@ -85,7 +85,7 @@ func GetChatMates(id int) ([]*types.User, error) {
 
 	query :=
 		`
-		SELECT users.id, nick_name
+		SELECT users.id, nick_name, status
 		FROM users
 		INNER JOIN 
 		(
@@ -118,7 +118,7 @@ func GetChatMates(id int) ([]*types.User, error) {
 
 	for rows.Next() {
 		var user types.User
-		err = rows.Scan(&(user.Id), &(user.NickName))
+		err = rows.Scan(&(user.Id), &(user.NickName), &(user.Status))
 		if err != nil {
 			return nil, err
 		}
