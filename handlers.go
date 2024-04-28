@@ -209,29 +209,36 @@ func newpostHandler(w http.ResponseWriter, r *http.Request) {
 
 	resp := types.Response{Payload: nil, Error: nil}
 
+	keys, ok := r.URL.Query()["session_id"]
+	if !ok || len(keys[0]) < 1 {
+		resp.Error = &types.Error{Type: util.MISSING_PARAM, Message: "Error: missing request parameter: session_id"}
+		sendResponse(w, resp)
+		return
+	}
+	session_id := keys[0]
+
+	//Verify User
+	user, err := db.GetUserBySessionId(session_id)
+	if user == nil {
+		resp.Error = &types.Error{Type: util.NO_USER_FOUND, Message: fmt.Sprintf("Error: unable to authorize user: %v", err)}
+		sendResponse(w, resp)
+		return
+	}
+
+	if err != nil {
+		resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
+		sendResponse(w, resp)
+		return
+	}
+
+	if user.Status == "banned" {
+		resp.Error = &types.Error{Type: util.AUTHORIZATION, Message: "Error: Banned by administrator"}
+		sendResponse(w, resp)
+		return
+	}
+	util.RemoveUserInfo(user)
+
 	if r.Method == "GET" {
-		keys, ok := r.URL.Query()["session_id"]
-		if !ok || len(keys[0]) < 1 {
-			resp.Error = &types.Error{Type: util.MISSING_PARAM, Message: "Error: missing request parameter: session_id"}
-			sendResponse(w, resp)
-			return
-		}
-		session_id := keys[0]
-
-		//Verify User
-		user, err := db.GetUserBySessionId(session_id)
-		if user == nil {
-			resp.Error = &types.Error{Type: util.NO_USER_FOUND, Message: fmt.Sprintf("Error: unable to authorize user: %v", err)}
-			sendResponse(w, resp)
-			return
-		}
-		if err != nil {
-			resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
-			sendResponse(w, resp)
-			return
-		}
-
-		util.RemoveUserInfo(user)
 
 		//Get Categories
 		categories, err := db.GetCategories()
@@ -255,9 +262,8 @@ func newpostHandler(w http.ResponseWriter, r *http.Request) {
 		npop.Categories = string(j)
 
 		resp.Payload = npop
-
 	} else if r.Method == "POST" {
-		session_id := r.FormValue("session_id")
+		//session_id := r.FormValue("session_id")
 		content := strings.TrimSpace(r.FormValue("content"))
 		categories := r.FormValue("categories")
 
@@ -274,20 +280,19 @@ func newpostHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// 1.Verify session_id
-		user, err := db.GetUserBySessionId(session_id)
-		if user == nil {
-			resp.Error = &types.Error{Type: util.NO_USER_FOUND, Message: fmt.Sprintf("Error: unable to authorize user: %v", err)}
-			sendResponse(w, resp)
-			return
-		}
-		if err != nil {
-			resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
-			sendResponse(w, resp)
-			return
-		}
-
-		util.RemoveUserInfo(user)
+		// // 1.Verify session_id
+		// user, err := db.GetUserBySessionId(session_id)
+		// if user == nil {
+		// 	resp.Error = &types.Error{Type: util.NO_USER_FOUND, Message: fmt.Sprintf("Error: unable to authorize user: %v", err)}
+		// 	sendResponse(w, resp)
+		// 	return
+		// }
+		// if err != nil {
+		// 	resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
+		// 	sendResponse(w, resp)
+		// 	return
+		// }
+		//util.RemoveUserInfo(user)
 
 		// 2. Insert Post
 		var arr []string
@@ -401,16 +406,37 @@ func commentsHandler(w http.ResponseWriter, r *http.Request) {
 
 	resp := types.Response{Payload: nil, Error: nil}
 
-	if r.Method == "GET" {
-		//1.Get session_id and post_id
+	keys, ok := r.URL.Query()["session_id"]
+	if !ok || len(keys[0]) < 1 {
+		resp.Error = &types.Error{Type: util.MISSING_PARAM, Message: "Error: missing request parameter: session_id"}
+		sendResponse(w, resp)
+		return
+	}
+	session_id := keys[0]
 
-		keys, ok := r.URL.Query()["session_id"]
-		if !ok || len(keys[0]) < 1 {
-			resp.Error = &types.Error{Type: util.MISSING_PARAM, Message: "Error: missing request parameter: session_id"}
-			sendResponse(w, resp)
-			return
-		}
-		session_id := keys[0]
+	//Verify session_id
+	user, err := db.GetUserBySessionId(session_id)
+	if user == nil {
+		resp.Error = &types.Error{Type: util.NO_USER_FOUND, Message: fmt.Sprintf("Error: unable to authorize user: %v", err)}
+		sendResponse(w, resp)
+		return
+	}
+
+	if err != nil {
+		resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
+		sendResponse(w, resp)
+		return
+	}
+
+	if user.Status == "banned" {
+		resp.Error = &types.Error{Type: util.AUTHORIZATION, Message: "Error: Banned by administrator"}
+		sendResponse(w, resp)
+		return
+	}
+
+	util.RemoveUserInfo(user)
+
+	if r.Method == "GET" {
 
 		keys, ok = r.URL.Query()["post_id"]
 		if !ok || len(keys[0]) < 1 {
@@ -420,22 +446,7 @@ func commentsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		post_id := keys[0]
 
-		// 2.Verify session_id
-		user, err := db.GetUserBySessionId(session_id)
-		if user == nil {
-			resp.Error = &types.Error{Type: util.NO_USER_FOUND, Message: fmt.Sprintf("Error: unable to authorize user: %v", err)}
-			sendResponse(w, resp)
-			return
-		}
-		if err != nil {
-			resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
-			sendResponse(w, resp)
-			return
-		}
-
-		util.RemoveUserInfo(user)
-
-		//3. Get Post by post_id
+		// Get Post by post_id
 		postId, err := strconv.Atoi(post_id)
 		if err != nil {
 			resp.Error = &types.Error{Type: util.ERROR_PARSING_DATA, Message: fmt.Sprintf("Error: %v", err)}
@@ -472,7 +483,8 @@ func commentsHandler(w http.ResponseWriter, r *http.Request) {
 		resp.Payload = cpo
 
 	} else if r.Method == "POST" {
-		session_id := r.FormValue("session_id")
+		//session_id := r.FormValue("session_id")
+
 		post_id := r.FormValue("post_id")
 		comment := strings.TrimSpace(r.FormValue("comment"))
 
@@ -485,18 +497,6 @@ func commentsHandler(w http.ResponseWriter, r *http.Request) {
 
 		if len(comment) > 10000 {
 			resp.Error = &types.Error{Type: util.INVALID_INPUT, Message: "Comment is too large"}
-			sendResponse(w, resp)
-			return
-		}
-
-		user, err := db.GetUserBySessionId(session_id)
-		if err != nil {
-			resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
-			sendResponse(w, resp)
-			return
-		}
-		if user == nil {
-			resp.Error = &types.Error{Type: util.NO_USER_FOUND, Message: fmt.Sprintf("Error: unable to authorize user: %v", err)}
 			sendResponse(w, resp)
 			return
 		}
