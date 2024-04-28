@@ -173,7 +173,6 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 		util.RemoveUserInfo(data.User)
 		resp.Payload = data
 	}
-	fmt.Println(resp)
 	sendResponse(w, resp)
 }
 
@@ -279,20 +278,6 @@ func newpostHandler(w http.ResponseWriter, r *http.Request) {
 			sendResponse(w, resp)
 			return
 		}
-
-		// // 1.Verify session_id
-		// user, err := db.GetUserBySessionId(session_id)
-		// if user == nil {
-		// 	resp.Error = &types.Error{Type: util.NO_USER_FOUND, Message: fmt.Sprintf("Error: unable to authorize user: %v", err)}
-		// 	sendResponse(w, resp)
-		// 	return
-		// }
-		// if err != nil {
-		// 	resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
-		// 	sendResponse(w, resp)
-		// 	return
-		// }
-		//util.RemoveUserInfo(user)
 
 		// 2. Insert Post
 		var arr []string

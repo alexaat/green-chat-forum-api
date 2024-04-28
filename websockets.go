@@ -132,9 +132,6 @@ func broadcastClientsStatus() {
 		}
 
 		chatMates = filterUsersByBanned(chatMates)
-		for _, mate := range chatMates {
-			fmt.Println("filtered ", mate)
-		}
 
 		message := `{"online_users":[`
 		for _, user := range chatMates {

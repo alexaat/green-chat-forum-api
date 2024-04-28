@@ -132,15 +132,17 @@ func adminUsersHandler(w http.ResponseWriter, r *http.Request) {
 			if ban == "true" {
 				value = "banned"
 			}
-
-			fmt.Println("Ban user with id ", userId, value)
 			num, err := db.UpdateUserStatus(userId, value)
 			if err != nil {
 				resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Cannot update database. %v", err)}
 				sendResponse(w, resp)
 				return
 			}
+
+			broadcastClientsStatus()
+
 			resp.Payload = types.RowsAffected{RowsAffected: *num}
+
 		}
 
 	}
@@ -342,5 +344,4 @@ func adminCommentsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendResponse(w, resp)
-
 }
