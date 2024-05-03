@@ -574,7 +574,7 @@ func errorHandler(err error) {
 
 func sendResponse(w http.ResponseWriter, resp types.Response) {
 	//host:="http://localhost:8000"
-	host := "http://alexaat.com/forum"
+	host := "http://alexaat.com"
 	w.Header().Set("Access-Control-Allow-Origin", host)
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, PATCH")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
