@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	db "green-chat-forum-api/database"
 	types "green-chat-forum-api/types"
@@ -61,9 +62,9 @@ func adminUsersHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			resp.Payload = user
 		}
-	}
 
-	if r.Method == "DELETE" {
+	} else if r.Method == "DELETE" {
+
 		if userId > 0 {
 
 			//Get Posts
@@ -123,9 +124,7 @@ func adminUsersHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-	}
-
-	if r.Method == "PATCH" {
+	} else if r.Method == "PATCH" {
 		if userId > 0 {
 			ban := r.FormValue("ban")
 			value := ""
@@ -145,6 +144,8 @@ func adminUsersHandler(w http.ResponseWriter, r *http.Request) {
 
 		}
 
+	} else {
+		resp.Error = &types.Error{Type: util.WRONG_METHOD, Message: "Error: wrong http method"}
 	}
 
 	sendResponse(w, resp)
@@ -176,9 +177,8 @@ func adminSignUpHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		resp.Payload = admin
-	}
 
-	if r.Method == "DELETE" {
+	} else if r.Method == "DELETE" {
 		//Verify admin
 		keys, ok := r.URL.Query()["session_id"]
 		if !ok || len(keys[0]) < 1 {
@@ -202,6 +202,9 @@ func adminSignUpHandler(w http.ResponseWriter, r *http.Request) {
 			sendResponse(w, resp)
 			return
 		}
+
+	} else {
+		resp.Error = &types.Error{Type: util.WRONG_METHOD, Message: "Error: wrong http method"}
 	}
 	sendResponse(w, resp)
 }
@@ -256,9 +259,8 @@ func adminPostsHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			resp.Payload = post
 		}
-	}
 
-	if r.Method == "DELETE" {
+	} else if r.Method == "DELETE" {
 		if postId > 0 {
 			num, err := db.DeletePost(postId)
 			if err != nil {
@@ -271,6 +273,8 @@ func adminPostsHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
+	} else {
+		resp.Error = &types.Error{Type: util.WRONG_METHOD, Message: "Error: wrong http method"}
 	}
 
 	sendResponse(w, resp)
@@ -327,9 +331,8 @@ func adminCommentsHandler(w http.ResponseWriter, r *http.Request) {
 			resp.Payload = comments
 
 		}
-	}
 
-	if r.Method == "DELETE" {
+	} else if r.Method == "DELETE" {
 		if commentId > 0 {
 			num, err := db.DeleteCommentById(commentId)
 			if err != nil {
@@ -341,6 +344,77 @@ func adminCommentsHandler(w http.ResponseWriter, r *http.Request) {
 				RowsAffected: *num,
 			}
 		}
+
+	} else {
+		resp.Error = &types.Error{Type: util.WRONG_METHOD, Message: "Error: wrong http method"}
+	}
+
+	sendResponse(w, resp)
+}
+
+func adminCategoriesHandler(w http.ResponseWriter, r *http.Request) {
+	resp := types.Response{Payload: nil, Error: nil}
+
+	//Verify admin
+	keys, ok := r.URL.Query()["session_id"]
+	if !ok || len(keys[0]) < 1 {
+		resp.Error = &types.Error{Type: util.MISSING_PARAM, Message: "Error: missing request parameter: session_id"}
+		sendResponse(w, resp)
+		return
+	}
+	session_id := keys[0]
+	user, err := db.GetAdminBySessionId(session_id)
+	if err != nil || user == nil {
+		resp.Error = &types.Error{Type: util.AUTHORIZATION, Message: "Error: cannot verify admin"}
+		sendResponse(w, resp)
+		return
+	}
+
+	if r.Method == "GET" {
+		//Get All Categories
+		categories, err := db.GetCategories()
+		if err != nil {
+			resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
+			sendResponse(w, resp)
+			return
+		}
+		resp.Payload = categories
+
+	} else if r.Method == "POST" {
+		//Categories as json ["apple", "pear", "lemon"]
+		categories := r.FormValue("categories")
+		var arr []string
+		err = json.Unmarshal([]byte(categories), &arr)
+		if err != nil {
+			resp.Error = &types.Error{Type: util.ERROR_PARSING_DATA, Message: fmt.Sprintf("Error: %v", err)}
+			sendResponse(w, resp)
+			return
+		}
+		//1. Remove categories
+		_, err := db.DeleteCategories()
+		if err != nil {
+			resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
+			sendResponse(w, resp)
+			return
+		}
+		//2. Post Categories
+		_, err = db.InsertCategories(arr)
+		if err != nil {
+			resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
+			sendResponse(w, resp)
+			return
+		}
+		//3. Get Updated Categories
+		arr, err = db.GetCategories()
+		if err != nil {
+			resp.Error = &types.Error{Type: util.ERROR_ACCESSING_DATABASE, Message: fmt.Sprintf("Error: %v", err)}
+			sendResponse(w, resp)
+			return
+		}
+		resp.Payload = arr
+
+	} else {
+		resp.Error = &types.Error{Type: util.WRONG_METHOD, Message: "Error: wrong http method"}
 	}
 
 	sendResponse(w, resp)

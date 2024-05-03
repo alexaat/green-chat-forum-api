@@ -4,6 +4,7 @@ import (
 	"fmt"
 	database "green-chat-forum-api/database"
 	"net/http"
+	"os"
 )
 
 func main() {
@@ -28,6 +29,13 @@ func main() {
 	http.HandleFunc("/admin/posts/", adminPostsHandler)
 	http.HandleFunc("/admin/comments", adminCommentsHandler)
 	http.HandleFunc("/admin/comments/", adminCommentsHandler)
-	fmt.Println("Server running at port 8080")
-	http.ListenAndServe(":8080", nil)
+	http.HandleFunc("/admin/categories",adminCategoriesHandler)
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	fmt.Println("Starting server on port :" + port)
+	http.ListenAndServe(":"+port, nil)
 }
