@@ -13,6 +13,10 @@ import (
 	util "green-chat-forum-api/util"
 )
 
+func ping(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, "Welcome to Green Chat Forum API")
+}
+
 func websocketHandler(w http.ResponseWriter, r *http.Request) {
 	session_id := strings.TrimPrefix(r.URL.Path, "/ws/")
 
@@ -569,7 +573,9 @@ func errorHandler(err error) {
 }
 
 func sendResponse(w http.ResponseWriter, resp types.Response) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8000")
+	//host:="http://localhost:8000"
+	host := "http://alexaat.com/forum"
+	w.Header().Set("Access-Control-Allow-Origin", host)
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, PATCH")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	json.NewEncoder(w).Encode(resp)

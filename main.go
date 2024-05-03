@@ -12,7 +12,8 @@ func main() {
 	database.OpenDatabase()
 	defer database.CloseDatabase()
 
-	http.Handle("/", http.FileServer(http.Dir("../")))
+	//http.Handle("/", http.FileServer(http.Dir("../")))
+	http.HandleFunc("/", ping)
 	http.HandleFunc("/home", homeHandler)
 	http.HandleFunc("/signup", signupHandler)
 	http.HandleFunc("/signin", signinHandler)
