@@ -22,3 +22,6 @@ const MISSING_PARAM = "missing request parameter"
 const INVALID_INPUT = "invalid input"
 
 const AUTHORIZATION = "authorization"
+
+//HOST := "http://localhost:8000"
+const HOST = "http://alexaat.com"
