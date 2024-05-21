@@ -162,7 +162,17 @@ func GetUserByEmailOrNickNameAndPassword(user types.User) (*types.User, error) {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		err = rows.Scan(&(u.Id), &(u.FirstName), &(u.LastName), &(u.Age), &(u.Gender), &(u.NickName), &(u.Email), &(u.Password), &(u.SessionId))
+		err = rows.Scan(
+			&(u.Id),
+			&(u.FirstName),
+			&(u.LastName),
+			&(u.Age),
+			&(u.Gender),
+			&(u.NickName),
+			&(u.Email),
+			&(u.Password),
+			&(u.SessionId),
+			&(u.Status))
 		if err != nil {
 			return nil, err
 		}
